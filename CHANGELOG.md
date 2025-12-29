@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.1.1 (2025-12-29)
+
+### Bug Fixes
+
+- Add tests, fix gitignore checks
+  ([`48c907c`](https://github.com/muka/dumpster/commit/48c907cda85ec4abcf600512b43a96c10a984e73))
+
+
 ## v1.1.0 (2025-12-29)
 
 ### Features

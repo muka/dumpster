@@ -1,6 +1,6 @@
 [project]
 name = "dumpster"
-version = "0.1.0"
+version = "1.0.0"
 description = "dump code to single file context like a pro"
 readme = "README.md"
 requires-python = ">=3.13"

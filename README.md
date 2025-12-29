@@ -1,18 +1,18 @@
 # Dumpster
 
-Dumpster is a tool to create a single-file context dump of your codebase, perfect for AI analysis or documentation.
+Dumpster is a tool to create a single-file context dump of your codebase, perfect for AI analysis and documentation.
 
 ## Features
 
 - Collects code from multiple files into one output file
 - Supports Git integration for version information
 - Configurable through dump.yaml
-- Handles various file types including Python, Markdown, YAML, and more
+- Handles various textual files
 
 ## Installation
 
 ```bash
-pip install dumpster
+pip install dumpster-cli
 ```
 
 ## Usage
@@ -29,11 +29,11 @@ contents:
   - "**/*.md"
 ```
 
-You can also use `dumpster init` to create a stub `dump.yaml` and create/update the local `.gitignore`
+You can also use `dumpster-cli init` to create a stub `dump.yaml` and create/update the local `.gitignore`
 
 2. Run the dump command:
 ```bash
-dumpster
+dumpster-cli
 ```
 
 ## Configuration

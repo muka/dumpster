@@ -1,5 +1,5 @@
 [project]
-name = "dumpster"
+name = "dumpster-cli"
 version = "1.0.0"
 description = "dump code to single file context like a pro"
 readme = "README.md"
@@ -23,7 +23,7 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project.scripts]
-dumpster = "dumpster.cli:cli"
+dumpster-cli = "dumpster.cli:cli"
 
 [tool.setuptools.packages.find]
 where = ["."]

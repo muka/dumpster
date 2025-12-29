@@ -23,9 +23,15 @@ def is_git_repo(path: Path) -> bool:
 def is_git_ignored(path: Path) -> bool:
     repo = git_repo(path)
     if not repo:
+        logger.info(f"{path} is not in the git repo")
         return False
+
     try:
-        return path in repo.ignored(path)
+        # Get relative path to repository root
+        rel_path = path.relative_to(repo.working_dir)
+        ignored = repo.ignored(str(rel_path))
+        is_ignored = str(rel_path) in ignored
+        return is_ignored
     except Exception as e:
         logger.warning(f"Failed to check ignored file for {path}: {e}")
         return False
@@ -57,3 +63,10 @@ def get_git_metadata(path: Path) -> Dict[str, str]:
             "message": "",
             "dirty": "no",
         }
+
+
+def render_git_metadata(meta: Dict[str, str]) -> str:
+    lines = ["# Git metadata"]
+    for k, v in meta.items():
+        lines.append(f"# {k}: {v}")
+    return "\n".join(lines)

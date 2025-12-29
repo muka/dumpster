@@ -1,8 +1,15 @@
+extensions:
+  - .py
+  - .md
+  - .json
+  - .toml
+
 contents:
   - dumpster
   - tests
   - README.md
   - pyproject.toml
   - .github
+  - .venv
 
 output: sources.txt

@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Iterable, List, Dict
 from functools import lru_cache
 
-from dumpster.git_utils import is_git_ignored, get_git_metadata
+from dumpster.git_utils import is_git_ignored, get_git_metadata, render_git_metadata
 from dumpster.logs import getLogger
 from dumpster.models import DumpsterConfig
 
@@ -37,11 +37,12 @@ TEXT_EXTENSIONS = {
 
 # Load configuration from dump.yaml
 @lru_cache(maxsize=1)
-def load_config() -> DumpsterConfig:
-    if not CONFIG_FILE.exists():
+def load_config(config_file: Path | str | None = None) -> DumpsterConfig:
+    config_file = Path(config_file or CONFIG_FILE)
+    if not config_file.exists():
         raise FileNotFoundError(f"{CONFIG_FILE} not found")
 
-    return DumpsterConfig.model_validate(yaml.safe_load(open("dump.yaml")))
+    return DumpsterConfig.model_validate(yaml.safe_load(open(config_file)))
 
 
 # Get text extensions from config or use defaults
@@ -73,18 +74,18 @@ def should_skip(path: Path) -> bool:
     return False
 
 
-def expand_content_entry(entry: str) -> List[Path]:
+def expand_content_entry(entry: str, root_path: Path) -> List[Path]:
     """
     Expansion rules:
       - directory → recursive include (dir/**)
       - glob pattern → glob expansion
       - file → include file
     """
-    path = (ROOT / entry).resolve()
+    path = (root_path / entry).resolve()
 
     # Explicit glob pattern
     if any(ch in entry for ch in ["*", "?", "["]):
-        return sorted(ROOT.glob(entry))
+        return sorted(root_path.glob(entry))
 
     # Directory → recursive include
     if path.is_dir():
@@ -97,12 +98,12 @@ def expand_content_entry(entry: str) -> List[Path]:
     return []
 
 
-def iter_content_files(entries: Iterable[str]) -> List[Path]:
+def iter_content_files(entries: Iterable[str], root_path: Path) -> List[Path]:
     seen = set()
     result: List[Path] = []
 
     for entry in entries:
-        for path in expand_content_entry(entry):
+        for path in expand_content_entry(entry, root_path):
             if should_skip(path):
                 continue
             if path in seen:
@@ -114,53 +115,37 @@ def iter_content_files(entries: Iterable[str]) -> List[Path]:
 
 
 # ---------------------------------------------------------------------------
-# Git metadata
-# ---------------------------------------------------------------------------
-
-
-def git(cmd: List[str]) -> str:
-    try:
-        return subprocess.check_output(
-            ["git"] + cmd,
-            cwd=ROOT,
-            stderr=subprocess.DEVNULL,
-            text=True,
-        ).strip()
-    except Exception:
-        return ""
-
-
-def render_git_metadata(meta: Dict[str, str]) -> str:
-    lines = ["# Git metadata"]
-    for k, v in meta.items():
-        lines.append(f"# {k}: {v}")
-    return "\n".join(lines)
-
-
-# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
 
-def dump() -> None:
+def dump(
+    root_path: Path | str | None = None,
+    config_file: Path | str | None = None,
+) -> None:
 
-    if not ROOT.exists():
-        logger.error(f"{ROOT} does not exists")
+    if root_path and not config_file:
+        config_file = Path(root_path) / "dump.yaml"
+
+    root_path = Path(root_path or ROOT)
+    if not root_path.exists():
+        logger.error(f"{root_path} does not exists")
         raise FileNotFoundError()
 
+    config_file = Path(config_file or CONFIG_FILE)
     if not CONFIG_FILE.exists():
         logger.error(f"{CONFIG_FILE} does not exists")
         raise FileNotFoundError()
 
-    config = load_config()
+    config = load_config(config_file)
 
     contents: List[str] = config.contents
 
-    files = iter_content_files(contents)
-    git_meta = get_git_metadata(ROOT)
+    files = iter_content_files(contents, root_path)
+    git_meta = get_git_metadata(root_path)
 
     output_path = config.output
-    OUTFILE = (ROOT / output_path).resolve()
+    OUTFILE = (root_path / output_path).resolve()
 
     with open(OUTFILE, "w", encoding="utf-8") as out:
         if config.prompt:
@@ -172,7 +157,7 @@ def dump() -> None:
             out.write(config.header.strip() + "\n\n")
 
         for file in files:
-            rel = file.relative_to(ROOT)
+            rel = file.relative_to(root_path)
             out.write(f"\n# file: {rel}\n")
             out.write(file.read_text(encoding="utf-8", errors="ignore"))
             out.write("\n")

@@ -3,7 +3,12 @@ version: "3"
 tasks:
   dump-source:
     cmds:
-      - uv run python dumpster/main.py
+      - uv run dumpster-cli
+
+  test:
+    cmds:
+      - uv run pytest
+
   release:
     cmds:
       - uv run semantic-release -v version --no-vcs-release

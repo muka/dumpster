@@ -1,0 +1,11 @@
+version: "3"
+
+tasks:
+  dump-source:
+    cmds:
+      - uv run python dumpster/main.py
+  release:
+    cmds:
+      - uv run semantic-release -v version --no-vcs-release
+      - git push
+      - git push --tags

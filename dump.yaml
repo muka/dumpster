@@ -1,0 +1,8 @@
+contents:
+  - dumpster
+  - tests
+  - README.md
+  - pyproject.toml
+  - .github
+
+output: sources.txt

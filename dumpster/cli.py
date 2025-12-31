@@ -1,6 +1,6 @@
 import typer
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 from dumpster.api import dump
 
@@ -20,21 +20,36 @@ contents:
 
 
 @app.callback(invoke_without_command=True)
-def callback(ctx: typer.Context):
+def callback(
+    ctx: typer.Context,
+    contents: Optional[List[str]] = typer.Option(
+        None,
+        "--contents",
+        "-c",
+        help="Override dump.yaml contents entries (repeatable).",
+    ),
+):
     """
     Calling without commnad start the dump
 
     """
     if ctx.invoked_subcommand is None:
-        dump()
+        dump(contents=contents)
 
 
 @app.command(
     help="Run dumpster",
 )
-def run():
+def run(
+    contents: Optional[List[str]] = typer.Option(
+        None,
+        "--contents",
+        "-c",
+        help="Override dump.yaml contents entries (repeatable).",
+    ),
+):
     """Default command to dump code based on dump.yaml settings"""
-    dump()
+    dump(contents=contents)
 
 
 @app.command(help="Generate a dumpster configuration")

@@ -5,7 +5,7 @@ import os
 import subprocess
 import yaml
 from pathlib import Path
-from typing import Iterable, List, Dict
+from typing import Iterable, List, Dict, Optional
 from functools import lru_cache
 
 from dumpster.git_utils import is_git_ignored, get_git_metadata, render_git_metadata
@@ -103,11 +103,18 @@ def iter_content_files(entries: Iterable[str], root_path: Path) -> List[Path]:
     result: List[Path] = []
 
     for entry in entries:
-        for path in expand_content_entry(entry, root_path):
-            if should_skip(path):
+        expanded = expand_content_entry(entry, root_path)
+
+        for path in expanded:
+            # If the entry points to a concrete file, trust it
+            is_explicit_file = (root_path / entry).resolve() == path and path.is_file()
+
+            if not is_explicit_file and should_skip(path):
                 continue
+
             if path in seen:
                 continue
+
             seen.add(path)
             result.append(path)
 
@@ -122,6 +129,7 @@ def iter_content_files(entries: Iterable[str], root_path: Path) -> List[Path]:
 def dump(
     root_path: Path | str | None = None,
     config_file: Path | str | None = None,
+    contents: Optional[List[str]] = None,
 ) -> None:
 
     if root_path and not config_file:
@@ -139,9 +147,10 @@ def dump(
 
     config = load_config(config_file)
 
-    contents: List[str] = config.contents
+    # CLI override (subset dumps)
+    effective_contents: List[str] = contents if contents else config.contents
 
-    files = iter_content_files(contents, root_path)
+    files = iter_content_files(effective_contents, root_path)
     git_meta = get_git_metadata(root_path)
 
     output_path = config.output

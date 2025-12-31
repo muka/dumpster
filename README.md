@@ -32,9 +32,17 @@ contents:
 You can also use `dumpster-cli init` to create a stub `dump.yaml` and create/update the local `.gitignore`
 
 2. Run the dump command:
+
 ```bash
 dumpster-cli
 ```
+
+optionally you can create a subset of the dump with
+
+```bash
+dumpster-cli --contents ./folder1 --contents ./other/folder/myfile.py
+```
+
 
 ## Configuration
 

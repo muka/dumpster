@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.1.2 (2025-12-31)
+
+### Bug Fixes
+
+- Improve file selection
+  ([`beccd18`](https://github.com/muka/dumpster/commit/beccd1832dfacd989036e6049386672e1485806c))
+
+
 ## v1.1.1 (2025-12-29)
 
 ### Bug Fixes

@@ -62,7 +62,7 @@ def test_multi_dump_mode_defaults_apply_except_output(tmp_path: Path):
     outs = dump(root_path=tmp_path, config_file=cfg_path)
 
     # ui has no output -> slug(name).txt
-    ui_out = tmp_path / "ui.txt"
+    ui_out = tmp_path / ".dumpster/ui.txt"
     api_out = tmp_path / "api-custom.txt"
 
     assert ui_out in outs
@@ -97,9 +97,9 @@ def test_multi_dump_mode_name_selection_regex(tmp_path: Path):
 
     outs = dump(root_path=tmp_path, config_file=cfg_path, name="ui.*")
 
-    assert outs == [tmp_path / "ui-core.txt"]
-    assert (tmp_path / "ui-core.txt").exists()
-    assert not (tmp_path / "backend.txt").exists()
+    assert outs == [tmp_path / ".dumpster/ui-core.txt"]
+    assert (tmp_path / ".dumpster/ui-core.txt").exists()
+    assert not (tmp_path / ".dumpster/backend.txt").exists()
 
 
 def test_multi_dump_mode_name_selection_no_match_raises(tmp_path: Path):

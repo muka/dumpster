@@ -2,6 +2,24 @@
 
 <!-- version list -->
 
+## v1.2.0 (2026-01-01)
+
+### Bug Fixes
+
+- Added .dumpster dir
+  ([`d4dd89c`](https://github.com/muka/dumpster/commit/d4dd89c151f25d481781e32af7b9a28186a0fbb3))
+
+### Documentation
+
+- Add --contents flag
+  ([`2e85e6a`](https://github.com/muka/dumpster/commit/2e85e6a2c2ffc50906c88dfbe4083da40455d8d8))
+
+### Features
+
+- Support multiple batch profiles
+  ([`22a3c12`](https://github.com/muka/dumpster/commit/22a3c123b8d320d846269e2517bed81efe8c2aed))
+
+
 ## v1.1.2 (2025-12-31)
 
 ### Bug Fixes

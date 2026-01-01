@@ -37,14 +37,23 @@ def is_git_ignored(path: Path) -> bool:
         return False
 
 
-def get_git_metadata(path: Path) -> Dict[str, str]:
+def get_git_metadata(path: Path) -> Dict[str, str] | None:
     try:
+        working_dir = str(path)
+
+        git_dir_exists = Path(path / ".git").exists()
+        if not git_dir_exists:
+            return None
+
         repo = Repo(path, search_parent_directories=True)
         head = repo.head
         commit = head.commit
+        remote = repo.remote()
 
         return {
-            "repository_root": str(repo.working_dir),
+            "working_dir": working_dir,
+            "remote_url": str(remote.url),
+            "remote_name": str(remote.name),
             "branch": head.ref.name if head.is_detached else "detached",
             "commit": str(commit.hexsha),
             "commit_time": commit.committed_datetime.isoformat(),
@@ -54,18 +63,12 @@ def get_git_metadata(path: Path) -> Dict[str, str]:
         }
     except Exception as e:
         logger.warning(f"Failed to get repo metadata from {path}: {e}")
-        return {
-            "repository_root": str(path),
-            "branch": "",
-            "commit": "",
-            "commit_time": "",
-            "author": "",
-            "message": "",
-            "dirty": "no",
-        }
+        return None
 
 
-def render_git_metadata(meta: Dict[str, str]) -> str:
+def render_git_metadata(meta: Dict[str, str] | None) -> str:
+    if meta is None:
+        return ""
     lines = ["# Git metadata"]
     for k, v in meta.items():
         lines.append(f"# {k}: {v}")

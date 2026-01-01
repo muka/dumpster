@@ -28,18 +28,20 @@ def callback(
         "-c",
         help="Override dump.yaml contents entries (repeatable).",
     ),
+    name: Optional[str] = typer.Option(
+        None,
+        "--name",
+        help="Select dump profile by name (regex/fuzzy). Only applies when dump.yaml has `dumps:`.",
+    ),
 ):
     """
-    Calling without commnad start the dump
-
+    Calling without command starts the dump.
     """
     if ctx.invoked_subcommand is None:
-        dump(contents=contents)
+        dump(contents=contents, name=name)
 
 
-@app.command(
-    help="Run dumpster",
-)
+@app.command(help="Run dumpster")
 def run(
     contents: Optional[List[str]] = typer.Option(
         None,
@@ -47,9 +49,14 @@ def run(
         "-c",
         help="Override dump.yaml contents entries (repeatable).",
     ),
+    name: Optional[str] = typer.Option(
+        None,
+        "--name",
+        help="Select dump profile by name (regex/fuzzy). Only applies when dump.yaml has `dumps:`.",
+    ),
 ):
     """Default command to dump code based on dump.yaml settings"""
-    dump(contents=contents)
+    dump(contents=contents, name=name)
 
 
 @app.command(help="Generate a dumpster configuration")
@@ -59,32 +66,30 @@ def init(
     )
 ):
     """Create/update dump.yaml and .gitignore"""
-    # Create dump.yaml if it doesn't exist
     dump_yaml_path = Path("dump.yaml")
     if not dump_yaml_path.exists():
-        with open(dump_yaml_path, "w") as f:
-            f.write(DEFAULT_DUMP_YAML)
+        dump_yaml_path.write_text(DEFAULT_DUMP_YAML, encoding="utf-8")
         typer.echo(f"Created {dump_yaml_path}")
     else:
         typer.echo(f"File {dump_yaml_path} already exists, skipping creation")
 
-    # Update .gitignore
     gitignore_path = Path(".gitignore")
     output_file = output or "sources.txt"
 
     if gitignore_path.exists():
-        with open(gitignore_path, "r+") as f:
-            content = f.read()
-            if output_file not in content:
+        content = gitignore_path.read_text(encoding="utf-8")
+        if output_file not in content:
+            with open(gitignore_path, "a", encoding="utf-8") as f:
                 f.write(f"\n# Dumpster output\n{output_file}\n")
-                typer.echo(f"Updated {gitignore_path} with {output_file}")
-            else:
-                typer.echo(
-                    f"Reference of {output_file} is already in {gitignore_path}, skipping"
-                )
+            typer.echo(f"Updated {gitignore_path} with {output_file}")
+        else:
+            typer.echo(
+                f"Reference of {output_file} is already in {gitignore_path}, skipping"
+            )
     else:
-        with open(gitignore_path, "w") as f:
-            f.write(f"# Dumpster output\n{output_file}\n")
+        gitignore_path.write_text(
+            f"# Dumpster output\n{output_file}\n", encoding="utf-8"
+        )
         typer.echo(f"Created {gitignore_path} with {output_file}")
 
 

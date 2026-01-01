@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.2.2 (2026-01-01)
+
+### Bug Fixes
+
+- Avoid env expansion, silence warning
+  ([`6cfcc33`](https://github.com/muka/dumpster/commit/6cfcc33f6df6156fa96f56f6d67521760305a6fb))
+
+
 ## v1.2.1 (2026-01-01)
 
 ### Bug Fixes

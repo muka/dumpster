@@ -15,8 +15,15 @@ from dumpster.const import DEFAULT_TEXT_EXTENSIONS, FILE_SEPARATOR
 
 logger = getLogger(__name__)
 
-ROOT = Path(os.getenv("DUMPSTER_ROOT", Path.cwd().resolve()))
-CONFIG_FILE = Path(os.getenv("DUMPSTER_CONFIG", ROOT / "dump.yaml"))
+
+def _expand_path(value):
+    if value is None:
+        return None
+    return Path(os.path.expandvars(os.path.expanduser(value))).resolve()
+
+
+ROOT = _expand_path(os.getenv("DUMPSTER_ROOT")) or Path.cwd().resolve()
+CONFIG_FILE = _expand_path(os.getenv("DUMPSTER_CONFIG")) or (ROOT / "dump.yaml")
 
 
 def _slugify(value: str) -> str:

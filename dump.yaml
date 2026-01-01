@@ -10,6 +10,27 @@ contents:
   - README.md
   - pyproject.toml
   - .github
-  - .venv
 
-output: sources.txt
+dumps:
+  - name: all
+
+  - name: core
+    extensions:
+      - .py
+      - .md
+      - .json
+      - .toml
+
+    contents:
+      - dumpster
+      - tests
+      - README.md
+      - pyproject.toml
+
+  - name: github actions
+    extensions:
+      - .yaml
+      - .yml
+
+    contents:
+      - .github

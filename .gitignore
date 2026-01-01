@@ -8,5 +8,6 @@ wheels/
 
 # Virtual environments
 .venv
-sources.txt
 test_output.txt
+# Dumpster output
+.dumpster

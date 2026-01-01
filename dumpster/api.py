@@ -245,7 +245,7 @@ def dump(
 
             # output is NOT inherited from root; compose if missing
             if "output" not in item or not str(item.get("output") or "").strip():
-                merged["output"] = f"{_slugify(item_name)}.txt"
+                merged["output"] = f".dumpster/{_slugify(item_name)}.txt"
 
             # Ensure the config has its name
             merged["name"] = item_name

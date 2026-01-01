@@ -74,7 +74,7 @@ def init(
         typer.echo(f"File {dump_yaml_path} already exists, skipping creation")
 
     gitignore_path = Path(".gitignore")
-    output_file = output or "sources.txt"
+    output_file = output or ".dumpster"
 
     if gitignore_path.exists():
         content = gitignore_path.read_text(encoding="utf-8")

@@ -16,7 +16,7 @@ class DumpsterConfig(BaseModel, extra="allow"):
     contents: List[str] = Field(default=[], description="Patterns of files to include")
     exclude: List[str] = Field(default=[], description="Patterns of files to exclude")
 
-    output: str = Field(default="sources.txt", description="Output file path")
+    output: str = Field(default=".dumpster/sources.txt", description="Output file path")
 
     prompt: Optional[str] = Field(default=None, description="sources prompt")
 

@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.2.1 (2026-01-01)
+
+### Bug Fixes
+
+- Avoid env in path
+  ([`5b16e66`](https://github.com/muka/dumpster/commit/5b16e660157f7f93e05e80d976e7d98fd6aa69f1))
+
+### Chores
+
+- Fix tests
+  ([`7417990`](https://github.com/muka/dumpster/commit/74179906b7b6cef3ffaacafe3c15efa714a5ab26))
+
+
 ## v1.2.0 (2026-01-01)
 
 ### Bug Fixes

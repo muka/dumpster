@@ -10,7 +10,7 @@ logger = getLogger(__name__)
 
 def git_repo(root: Path):
     try:
-        return Repo(root, search_parent_directories=True)
+        return Repo(root, search_parent_directories=True, expand_vars=False)
     except Exception as e:
         logger.warning(f"Failed to find git repo from {root}: {e}")
         return None
@@ -45,7 +45,7 @@ def get_git_metadata(path: Path) -> Dict[str, str] | None:
         if not git_dir_exists:
             return None
 
-        repo = Repo(path, search_parent_directories=True)
+        repo = Repo(path, search_parent_directories=True, expand_vars=False)
         head = repo.head
         commit = head.commit
         remote = repo.remote()

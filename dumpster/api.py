@@ -5,10 +5,11 @@ import os
 import re
 import yaml
 from pathlib import Path
-from typing import Iterable, List, Optional, Any, Dict, Callable
+from typing import Iterable, List, Optional, Any, Dict, Callable, Set
 from functools import lru_cache
 
 from dumpster.git_utils import (
+    batch_git_ignored,
     build_gitignore_set,
     git_ignored_set,
     git_repo,
@@ -133,49 +134,85 @@ def expand_content_entry(entry: str, root_path: Path) -> List[Path]:
     return []
 
 
+def _is_glob(entry: str) -> bool:
+    return any(ch in entry for ch in ["*", "?", "["])
+
+
 def iter_content_files(
     entries: Iterable[str],
     root_path: Path,
     extensions: set[str],
 ) -> List[Path]:
+    # Identify *explicit* files passed by the user (no glob, and is a file)
+    explicit_files: Set[Path] = set()
+    for entry in entries:
+        e = (entry or "").strip()
+        if not e or _is_glob(e):
+            continue
+        p = (root_path / e).resolve()
+        if p.is_file():
+            explicit_files.add(p)
 
-    # Phase 1: expand everything
-    expanded: list[Path] = []
+    # Expand entries (same as before), but keep everything for now
+    expanded: List[Path] = []
     for entry in entries:
         expanded.extend(expand_content_entry(entry, root_path))
 
-    # Deduplicate early
-    expanded = list(dict.fromkeys(expanded))
+    # Dedup while preserving order (avoid huge set churn early)
+    seen_any: Set[Path] = set()
+    deduped: List[Path] = []
+    for p in expanded:
+        if p not in seen_any:
+            seen_any.add(p)
+            deduped.append(p)
 
-    # Phase 2: batch gitignore check
+    # Prepare a list of non-explicit candidate files that need filtering
+    candidates_for_ignore: List[Path] = []
+    for p in deduped:
+        if p in explicit_files:
+            continue
+        if p.is_file() and is_text_file(p, extensions):
+            candidates_for_ignore.append(p)
+
+    # Batch compute gitignored for candidates (fast)
     repo = git_repo(root_path)
-    ignored: set[str] = set()
-
+    ignored_rel: Set[str] = set()
     if repo:
-        ignored = git_ignored_set(repo, expanded)
+        ignored_rel = batch_git_ignored(repo, candidates_for_ignore)
 
-    # Phase 3: final filtering
-    seen: set[Path] = set()
-    result: list[Path] = []
+    # Final filtering: match existing should_skip logic, but use the batch set
+    result: List[Path] = []
+    seen_out: Set[Path] = set()
+    repo_wd = Path(repo.working_dir) if repo else None
 
-    for path in expanded:
-        is_explicit_file = path.is_file() and any(
-            (root_path / e).resolve() == path for e in entries
-        )
+    for p in deduped:
+        if p in seen_out:
+            continue
 
-        if not is_explicit_file:
-            if path.is_dir():
-                continue
-            if path.suffix.lower() not in extensions:
-                continue
-            if repo:
-                rel = str(path.relative_to(repo.working_dir))
-                if rel in ignored:
+        # If user explicitly listed a file, trust it (same behavior as current code)
+        if p in explicit_files:
+            if p.is_file():
+                result.append(p)
+                seen_out.add(p)
+            continue
+
+        # Otherwise apply the standard filters
+        if p.is_dir():
+            continue
+        if not is_text_file(p, extensions):
+            continue
+
+        if repo and repo_wd:
+            try:
+                rel = str(p.relative_to(repo_wd))
+                if rel in ignored_rel:
                     continue
+            except Exception:
+                # outside repo => behave like "not ignored"
+                pass
 
-        if path not in seen:
-            seen.add(path)
-            result.append(path)
+        result.append(p)
+        seen_out.add(p)
 
     return sorted(result)
 

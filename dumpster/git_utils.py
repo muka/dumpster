@@ -1,8 +1,9 @@
+from collections.abc import Set
 from functools import lru_cache
 from pathlib import Path
 from git import Repo
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Iterable
 
 from dumpster.logs import getLogger
 
@@ -40,6 +41,49 @@ def build_gitignore_set(repo: Repo, files: list[Path]) -> set[Path]:
     rels = [str(f.relative_to(repo.working_dir)) for f in files]
     ignored = repo.git.check_ignore(*rels).splitlines()
     return set(ignored)
+
+
+def batch_git_ignored(
+    repo, paths: Iterable[Path], *, chunk_size: int = 2000
+) -> set[str]:
+    """
+    Returns a set of repo-relative paths ignored by git (.gitignore, info/exclude, global excludes).
+
+    Important:
+    - `git check-ignore` exits with status 1 when *none* of the provided paths are ignored.
+      GitPython raises GitCommandError for that, so we must treat status==1 as "no matches",
+      not as a fatal error.
+    - Chunking avoids "argument list too long" on large repos.
+    """
+    wd = Path(repo.working_dir)
+
+    rels: list[str] = []
+    for p in paths:
+        try:
+            rels.append(str(p.relative_to(wd)))
+        except Exception:
+            # outside repo
+            continue
+
+    ignored: Set[str] = set()
+    if not rels:
+        return ignored
+
+    for i in range(0, len(rels), chunk_size):
+        chunk = rels[i : i + chunk_size]
+        try:
+            out = repo.git.check_ignore(*chunk)
+            for line in out.splitlines():
+                if line:
+                    ignored.add(line)
+        except Exception as e:
+            # status 1 == "no ignored paths in this chunk" (normal)
+            if getattr(e, "status", None) == 1:
+                continue
+            # anything else is a real failure
+            raise
+
+    return ignored
 
 
 def is_git_ignored(path: Path) -> bool:

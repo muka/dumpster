@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.3.1 (2026-01-13)
+
+### Bug Fixes
+
+- Missing ingored subfolders
+  ([`ae5fbe1`](https://github.com/muka/dumpster/commit/ae5fbe13ccc9647cafc8cb441b237b33fbbc908c))
+
+
 ## v1.3.0 (2026-01-13)
 
 ### Features

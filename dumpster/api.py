@@ -8,7 +8,14 @@ from pathlib import Path
 from typing import Iterable, List, Optional, Any, Dict, Callable
 from functools import lru_cache
 
-from dumpster.git_utils import is_git_ignored, get_git_metadata, render_git_metadata
+from dumpster.git_utils import (
+    build_gitignore_set,
+    git_ignored_set,
+    git_repo,
+    is_git_ignored,
+    get_git_metadata,
+    render_git_metadata,
+)
 from dumpster.logs import getLogger
 from dumpster.models import DumpsterConfig
 from dumpster.const import DEFAULT_TEXT_EXTENSIONS, FILE_SEPARATOR
@@ -131,22 +138,42 @@ def iter_content_files(
     root_path: Path,
     extensions: set[str],
 ) -> List[Path]:
-    seen: set[Path] = set()
-    result: List[Path] = []
 
+    # Phase 1: expand everything
+    expanded: list[Path] = []
     for entry in entries:
-        expanded = expand_content_entry(entry, root_path)
+        expanded.extend(expand_content_entry(entry, root_path))
 
-        for path in expanded:
-            # If the entry points to a concrete file, trust it (ignore ext filter + gitignore)
-            is_explicit_file = (root_path / entry).resolve() == path and path.is_file()
+    # Deduplicate early
+    expanded = list(dict.fromkeys(expanded))
 
-            if not is_explicit_file and should_skip(path, extensions):
+    # Phase 2: batch gitignore check
+    repo = git_repo(root_path)
+    ignored: set[str] = set()
+
+    if repo:
+        ignored = git_ignored_set(repo, expanded)
+
+    # Phase 3: final filtering
+    seen: set[Path] = set()
+    result: list[Path] = []
+
+    for path in expanded:
+        is_explicit_file = path.is_file() and any(
+            (root_path / e).resolve() == path for e in entries
+        )
+
+        if not is_explicit_file:
+            if path.is_dir():
                 continue
-
-            if path in seen:
+            if path.suffix.lower() not in extensions:
                 continue
+            if repo:
+                rel = str(path.relative_to(repo.working_dir))
+                if rel in ignored:
+                    continue
 
+        if path not in seen:
             seen.add(path)
             result.append(path)
 

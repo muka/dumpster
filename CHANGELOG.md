@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.3.0 (2026-01-13)
+
+### Features
+
+- Add caching
+  ([`6262af0`](https://github.com/muka/dumpster/commit/6262af0e378539f3e647a6d4a69cfebec35ff1e9))
+
+
 ## v1.2.2 (2026-01-01)
 
 ### Bug Fixes

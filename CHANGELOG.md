@@ -2,6 +2,19 @@
 
 <!-- version list -->
 
+## v1.3.2 (2026-01-14)
+
+### Bug Fixes
+
+- Lower python version
+  ([`659cc8e`](https://github.com/muka/dumpster/commit/659cc8eb318f7c6ca26e9ab09e495aa993ba0a3a))
+
+### Chores
+
+- **deps**: Bump the runtime-dependencies group across 1 directory with 2 updates
+  ([`b1f1175`](https://github.com/muka/dumpster/commit/b1f1175a6cc9d66b85be2e7634699e52e5cd03a7))
+
+
 ## v1.3.1 (2026-01-13)
 
 ### Bug Fixes

@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.3.3 (2026-01-28)
+
+### Bug Fixes
+
+- Update init template
+  ([`ec63546`](https://github.com/muka/dumpster/commit/ec635464cf64e2d2fe0ca6d663cbc6f9868bb089))
+
+
 ## v1.3.2 (2026-01-14)
 
 ### Bug Fixes

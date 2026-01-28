@@ -7,15 +7,18 @@ from dumpster.api import dump
 app = typer.Typer()
 
 DEFAULT_DUMP_YAML = """# Dumpster configuration
-output: sources.txt
-extensions:
-  - .py
-  - .md
-  - .yaml
-  - .txt
-contents:
-  - "**/*.py"
-  - "**/*.md"
+dumps:
+  - name: example1
+#    extensions:
+#      - .py
+#      - .md
+#      - .json
+#      - .toml
+    contents:
+      - **/*.py
+      - tests
+      - README.md
+      - pyproject.toml
 """
 
 

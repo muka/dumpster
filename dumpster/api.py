@@ -5,7 +5,7 @@ import os
 import re
 import yaml
 from pathlib import Path
-from typing import Iterable, List, Optional, Any, Dict, Callable, Set
+from typing import Iterable, List, Optional, Any, Dict, Callable, Set, Mapping
 from functools import lru_cache
 
 from dumpster.git_utils import (
@@ -255,6 +255,144 @@ def _write_dump(
 
     logger.info(f"Wrote {len(files)} files to {outfile}")
     return outfile
+
+
+def _build_tree(paths: List[Path], *, root: Path) -> str:
+    """
+    Render a tree (like unix `tree`) of repo-relative file paths.
+    Directories are inferred from file paths.
+    """
+    rels = [p.relative_to(root) for p in paths]
+    # Trie node: dict[name -> children], where children is another dict; files are leaf nodes with {}
+    trie: dict[str, dict] = {}
+
+    for rp in rels:
+        parts = list(rp.parts)
+        node = trie
+        for part in parts:
+            node = node.setdefault(part, {})
+
+    def _sorted_items(d: dict[str, dict]) -> list[tuple[str, dict]]:
+        # Show directories first (non-empty dict), then files
+        items = list(d.items())
+        items.sort(key=lambda kv: (0 if kv[1] else 1, kv[0].lower()))
+        return items
+
+    lines: list[str] = []
+
+    def _walk(node: dict[str, dict], prefix: str = "") -> None:
+        items = _sorted_items(node)
+        for idx, (name, child) in enumerate(items):
+            last = idx == len(items) - 1
+            branch = "└── " if last else "├── "
+            lines.append(prefix + branch + name)
+            if child:
+                extension = "    " if last else "│   "
+                _walk(child, prefix + extension)
+
+    _walk(trie, "")
+    return "\n".join(lines)
+
+
+def resolve_dump_files(
+    root_path: Path | str | None = None,
+    config_file: Path | str | None = None,
+    contents: Optional[List[str]] = None,
+    name: Optional[str] = None,
+) -> Dict[str, List[Path]]:
+    """
+    Resolve the list of files that would be included, without writing output.
+
+    Returns:
+      dict(profile_name -> sorted list[Path]) where Paths are absolute.
+      In single-config mode, the profile name is "default" (or config.name if set).
+    """
+    root_path = Path(root_path or ROOT)
+
+    if not config_file:
+        config_file = root_path / "dump.yaml"
+    config_file = Path(config_file)
+
+    raw = _load_yaml_dict(config_file)
+    results: Dict[str, List[Path]] = {}
+
+    dumps = raw.get("dumps")
+    if isinstance(dumps, list) and dumps:
+        defaults = {k: v for k, v in raw.items() if k not in ("dumps", "output")}
+        matcher = _compile_name_matcher(name) if name else (lambda _: True)
+
+        selected: List[Dict[str, Any]] = []
+        for i, item in enumerate(dumps):
+            if not isinstance(item, dict):
+                logger.warning(
+                    f"Skipping dumps[{i}] because it is not a mapping/object"
+                )
+                continue
+            item_name = item.get("name")
+            if not isinstance(item_name, str) or not item_name.strip():
+                raise ValueError(f"dumps[{i}] is missing a valid 'name' field")
+            if matcher(item_name):
+                selected.append(item)
+
+        if name and not selected:
+            raise ValueError(f"No dump profiles matched --name {name!r}")
+
+        for item in selected:
+            item_name = item["name"].strip()
+            merged = dict(defaults)
+            merged.update(item)
+            merged["name"] = item_name
+
+            config = DumpsterConfig.model_validate(merged)
+            effective_contents = contents if contents is not None else config.contents
+            extensions = _extensions_from_config(config)
+            files = iter_content_files(effective_contents, root_path, extensions)
+            results[item_name] = files
+
+        return results
+
+    # Single-config mode
+    config = DumpsterConfig.model_validate(raw)
+    effective_contents = contents if contents is not None else config.contents
+    extensions = _extensions_from_config(config)
+    files = iter_content_files(effective_contents, root_path, extensions)
+    results[
+        (
+            config.name.strip()
+            if isinstance(config.name, str) and config.name.strip()
+            else "default"
+        )
+    ] = files
+    return results
+
+
+def tree(
+    root_path: Path | str | None = None,
+    config_file: Path | str | None = None,
+    contents: Optional[List[str]] = None,
+    name: Optional[str] = None,
+) -> str:
+    """
+    Return a human-readable tree of files that would be included in the dump.
+    In multi-profile mode, prints each profile separately.
+    """
+    root_path = Path(root_path or ROOT)
+    profiles = resolve_dump_files(
+        root_path=root_path, config_file=config_file, contents=contents, name=name
+    )
+
+    chunks: list[str] = []
+    for profile_name in sorted(profiles.keys(), key=lambda s: s.lower()):
+        files = profiles[profile_name]
+        header = f"{profile_name} ({len(files)} files)"
+        chunks.append(header)
+        if files:
+            chunks.append(_build_tree(files, root=root_path))
+        else:
+            chunks.append("└── (no files)")
+        chunks.append("")  # blank line
+
+    return "\n".join(chunks).rstrip() + "\n"
 
 
 def dump(

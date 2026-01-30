@@ -2,7 +2,7 @@ import typer
 from pathlib import Path
 from typing import List, Optional
 
-from dumpster.api import dump
+from dumpster.api import dump, tree
 
 app = typer.Typer()
 
@@ -94,6 +94,26 @@ def init(
             f"# Dumpster output\n{output_file}\n", encoding="utf-8"
         )
         typer.echo(f"Created {gitignore_path} with {output_file}")
+
+
+@app.command(
+    help="Show the list of files that would be included in the dump (tree view)",
+    name="tree",
+)
+def tree_cmd(
+    contents: Optional[List[str]] = typer.Option(
+        None,
+        "--contents",
+        "-c",
+        help="Override dump.yaml contents entries (repeatable).",
+    ),
+    name: Optional[str] = typer.Option(
+        None,
+        "--name",
+        help="Select dump profile by name (regex/fuzzy). Only applies when dump.yaml has `dumps:`.",
+    ),
+):
+    typer.echo(tree(contents=contents, name=name), nl=False)
 
 
 def cli():

@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.4.0 (2026-01-30)
+
+### Features
+
+- Add tree cmd
+  ([`aaf2b6f`](https://github.com/muka/dumpster/commit/aaf2b6fa399bb3401828471e8d903854c780b58a))
+
+
 ## v1.3.3 (2026-01-28)
 
 ### Bug Fixes
